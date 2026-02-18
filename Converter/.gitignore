@@ -13,3 +13,17 @@
 .externalNativeBuild
 .cxx
 local.properties
+keystore.properties
+
+.gradle/
+build/
+app/build/
+*/build/
+
+.idea/
+*.ipr
+*.iws
+
+*.apk
+*.output
+output-metadata.json
