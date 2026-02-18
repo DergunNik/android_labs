@@ -38,15 +38,35 @@ class NumpadFragment : Fragment() {
 
 @Composable
 fun NumpadScreen(viewModel: ConverterViewModel) {
-    val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "<=")
+    val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "+/-", "0", ".")
 
     Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+        Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Button(
+                onClick = {
+                    viewModel.onBackspace()
+                },
+                modifier = Modifier.weight(1f).fillMaxHeight().padding(4.dp),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(text = "<=", style = MaterialTheme.typography.headlineMedium)
+            }
+            Button(
+                onClick = {
+                    viewModel.onClear()
+                },
+                modifier = Modifier.weight(1f).fillMaxHeight().padding(4.dp),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(text = "C", style = MaterialTheme.typography.headlineMedium)
+            }
+        }
         keys.chunked(3).forEach { row ->
             Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 row.forEach { key ->
                     Button(
                         onClick = {
-                            if (key == "<=") viewModel.onBackspace()
+                            if (key == "+/-") viewModel.onMinus()
                             else viewModel.onNumberClick(key)
                         },
                         modifier = Modifier.weight(1f).fillMaxHeight().padding(4.dp),

@@ -38,17 +38,31 @@ class ConverterViewModel : ViewModel() {
     }
 
     fun onNumberClick(char: String) {
-        if (inputAmount.length >= 10) return
+        val digitsCount = inputAmount.count { it.isDigit() }
+        if (digitsCount >= 10 && char != ".") return
 
         inputAmount = when {
-            inputAmount == "0" && char != "." -> char
             char == "." && inputAmount.contains(".") -> inputAmount
+
+            (inputAmount == "0" || inputAmount == "-0") && char != "." -> {
+                if (inputAmount.startsWith("-")) "-$char" else char
+            }
+
             else -> inputAmount + char
         }
     }
 
     fun onBackspace() {
         inputAmount = if (inputAmount.length > 1) inputAmount.dropLast(1) else "0"
+    }
+
+    fun onClear() {
+        inputAmount = "0"
+    }
+
+    fun onMinus() {
+        if (inputAmount[0] == '-') inputAmount = inputAmount.drop(1)
+        else inputAmount = "-$inputAmount"
     }
 
     fun swapUnits() {
