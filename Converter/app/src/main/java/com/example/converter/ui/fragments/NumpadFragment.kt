@@ -46,7 +46,7 @@ fun NumpadScreen(viewModel: ConverterViewModel) {
                 row.forEach { key ->
                     Button(
                         onClick = {
-                            if (key == "C") viewModel.onBackspace()
+                            if (key == "<=") viewModel.onBackspace()
                             else viewModel.onNumberClick(key)
                         },
                         modifier = Modifier.weight(1f).fillMaxHeight().padding(4.dp),
