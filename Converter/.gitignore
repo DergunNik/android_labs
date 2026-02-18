@@ -27,3 +27,10 @@ app/build/
 *.apk
 *.output
 output-metadata.json
+
+captures/
+
+**/build/
+*.ap_
+*.dex
+*.dm
