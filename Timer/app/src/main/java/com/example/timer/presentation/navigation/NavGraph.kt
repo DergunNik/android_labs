@@ -8,6 +8,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.timer.presentation.screen.EditScreen
 import com.example.timer.presentation.screen.MainScreen
 
 @Composable
@@ -41,9 +42,10 @@ fun SetupNavGraph(navController: NavHostController) {
                 type = NavType.StringType
                 nullable = true
             })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("sequenceId")
-            PlaceholderScreen(title = "Редактор для ID: $id")
+        ) {
+            EditScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }
