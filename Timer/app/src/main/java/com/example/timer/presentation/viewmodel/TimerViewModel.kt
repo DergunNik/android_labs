@@ -30,7 +30,6 @@ class TimerViewModel @Inject constructor(
 
     private var timerService: TimerService? = null
 
-    // Внутренний стейт для UI, пока сервис не подключится
     private val _uiState = MutableStateFlow(TimerState())
     val uiState: StateFlow<TimerState> = _uiState.asStateFlow()
 

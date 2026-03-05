@@ -138,20 +138,26 @@ fun TimerScreen(
             HorizontalDivider()
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Список предстоящих фаз
             Text(
                 "Предстоящие фазы:",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.align(Alignment.Start)
             )
 
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(timerState.upcomingPhases) { phase ->
-                    ListItem(
-                        headlineContent = { Text(phase.type.name) },
-                        trailingContent = { Text(formatTime(phase.durationSeconds)) }
-                    )
+            if (timerState.upcomingPhases.isNotEmpty()) {
+                LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                    items(timerState.upcomingPhases) { phase ->
+                        ListItem(
+                            headlineContent = { Text(phase.type.name) },
+                            trailingContent = { Text(formatTime(phase.durationSeconds)) }
+                        )
+                    }
                 }
+            } else {
+                Text(
+                    "Это последняя фаза!",
+                    modifier = Modifier.padding(20.dp)
+                )
             }
         }
     }

@@ -1,9 +1,14 @@
 package com.example.timer.presentation.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
@@ -16,7 +21,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -33,6 +41,13 @@ fun EditScreen(
     onNavigateBack: () -> Unit
 ) {
     val sequence by viewModel.sequenceState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.messageEvent.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     if (sequence == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -42,6 +57,13 @@ fun EditScreen(
     }
 
     val currentSeq = sequence!!
+    val colorPresets = listOf(
+        Color(0xFFBB86FC), Color(0xFF03DAC5), Color(0xFFCF6679),
+        Color(0xFFFFB74D), Color(0xFF81C784), Color(0xFF64B5F6),
+        Color(0xFFF06292),
+        Color.Red, Color.Magenta, Color.Blue,
+        Color.Green, Color.Black, Color.White
+    )
 
     Scaffold(
         topBar = {
@@ -70,10 +92,36 @@ fun EditScreen(
                 value = currentSeq.name,
                 onValueChange = { viewModel.updateName(it) },
                 label = { Text("Название таймера") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            Text("Цвет последовательности", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(horizontal = 4.dp)
+            ) {
+                items(colorPresets) { color ->
+                    val isSelected = currentSeq.color == color.toArgb()
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(color)
+                            .border(
+                                width = if (isSelected) 3.dp else 0.dp,
+                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
+                                shape = CircleShape
+                            )
+                            .clickable { viewModel.updateColor(color.toArgb()) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
             Text("Фазы таймера", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -93,7 +141,7 @@ fun EditScreen(
             }
 
             FlowRow(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -130,11 +178,11 @@ fun PhaseEditItem(
             Text(
                 text = phase.type.name,
                 style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1.2f)
             )
 
             Row(
-                modifier = Modifier.weight(2f),
+                modifier = Modifier.weight(2.5f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -156,7 +204,7 @@ fun PhaseEditItem(
                     value = if (phase.durationSeconds == 0) "" else phase.durationSeconds.toString(),
                     onValueChange = { if (it.all { char -> char.isDigit() }) onTimeChange(it) },
                     modifier = Modifier
-                        .width(65.dp)
+                        .width(75.dp)
                         .height(controlHeight),
                     textStyle = LocalTextStyle.current.copy(
                         textAlign = TextAlign.Center,
@@ -203,7 +251,7 @@ fun PhaseEditItem(
             }
 
             Box(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(0.8f),
                 contentAlignment = Alignment.CenterEnd
             ) {
                 IconButton(onClick = onRemove, modifier = Modifier.size(controlHeight)) {
