@@ -31,7 +31,7 @@ fun MainScreen(
     onNavigateToSettings: () -> Unit,
 ) {
     val sequences by viewModel.sequences.collectAsState()
-
+    val isLoading by viewModel.isLoading.collectAsState()
     var sequenceToDelete by remember { mutableStateOf<TimerSequence?>(null) }
 
     if (sequenceToDelete != null) {
@@ -84,23 +84,34 @@ fun MainScreen(
             }
         }
     ) { padding ->
-        if (sequences.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.empty_list))
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(sequences, key = { it.id }) { sequence ->
-                    TimerItem(
-                        sequence = sequence,
-                        onDelete = { sequenceToDelete = sequence },
-                        onClick = { onNavigateToTimer(sequence.id) },
-                        onEditClick = { onNavigateToEdit(sequence.id) }
-                    )
+        Box(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                isLoading -> {
+                    CircularProgressIndicator()
+                }
+
+                sequences.isEmpty() -> {
+                    Text(stringResource(R.string.empty_list))
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(sequences, key = { it.id }) { sequence ->
+                            TimerItem(
+                                sequence = sequence,
+                                onDelete = { sequenceToDelete = sequence },
+                                onClick = { onNavigateToTimer(sequence.id) },
+                                onEditClick = { onNavigateToEdit(sequence.id) }
+                            )
+                        }
+                    }
                 }
             }
         }
