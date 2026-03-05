@@ -86,21 +86,25 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedButton(
                     onClick = {
                         viewModel.changeLanguage("ru")
                         activity?.recreate()
                     },
-                    modifier = Modifier.weight(1f),
-                    enabled = currentLanguage != "ru"
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
                 ) {
-                    Text(stringResource(R.string.language_russian))
+                    Text(
+                        text = stringResource(R.string.language_russian),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
 
                 OutlinedButton(
@@ -108,10 +112,14 @@ fun SettingsScreen(
                         viewModel.changeLanguage("en")
                         activity?.recreate()
                     },
-                    modifier = Modifier.weight(1f),
-                    enabled = currentLanguage != "en"
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp),
                 ) {
-                    Text(stringResource(R.string.language_english))
+                    Text(
+                        text = stringResource(R.string.language_english),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
             }
         }
