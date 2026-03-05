@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.timer.presentation.screen.EditScreen
 import com.example.timer.presentation.screen.MainScreen
+import com.example.timer.presentation.screen.TimerScreen
 
 @Composable
 fun SetupNavGraph(navController: NavHostController) {
@@ -31,9 +32,10 @@ fun SetupNavGraph(navController: NavHostController) {
         composable(
             route = Screen.Timer.route,
             arguments = listOf(navArgument("sequenceId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("sequenceId")
-            PlaceholderScreen(title = "Таймер для ID: $id")
+        ) {
+            TimerScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(

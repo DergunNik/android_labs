@@ -42,6 +42,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.lifecycle.service)
     val room_version = "2.8.4"
 
     implementation("androidx.room:room-runtime:$room_version")
