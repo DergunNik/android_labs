@@ -10,10 +10,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.timer.presentation.viewmodel.TimerViewModel
+import com.example.timer.R
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,7 +35,10 @@ fun TimerScreen(
                         viewModel.cancelTimer()
                         onNavigateBack()
                     }) {
-                        Icon(Icons.Filled.Close, contentDescription = "Закрыть таймер")
+                        Icon(
+                            Icons.Filled.Close,
+                            contentDescription = stringResource(R.string.close_timer)
+                        )
                     }
                 }
             )
@@ -46,15 +51,20 @@ fun TimerScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             if (timerState.isFinished) {
+
                 Spacer(modifier = Modifier.weight(1f))
+
                 Text(
-                    text = "Тренировка завершена!",
+                    text = stringResource(R.string.workout_finished),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
+
                 Spacer(modifier = Modifier.height(32.dp))
+
                 Button(
                     onClick = {
                         viewModel.cancelTimer()
@@ -62,21 +72,27 @@ fun TimerScreen(
                     },
                     modifier = Modifier.fillMaxWidth(0.5f)
                 ) {
-                    Text("Отлично")
+                    Text(stringResource(R.string.done))
                 }
+
                 Spacer(modifier = Modifier.weight(1f))
-                return@Column // Прерываем отрисовку остального UI
+                return@Column
             }
 
             Text(
-                text = "Фаза ${timerState.currentPhaseIndex} из ${timerState.totalPhases}",
+                text = stringResource(
+                    R.string.phase_progress,
+                    timerState.currentPhaseIndex,
+                    timerState.totalPhases
+                ),
                 style = MaterialTheme.typography.titleMedium
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = timerState.currentPhase?.type?.name ?: "Загрузка...",
+                text = timerState.currentPhase?.type?.name
+                    ?: stringResource(R.string.loading),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -87,11 +103,14 @@ fun TimerScreen(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(240.dp)
             ) {
-                val progress = if (timerState.currentPhaseTotalSeconds > 0) {
-                    timerState.timeLeftSeconds.toFloat() / timerState.currentPhaseTotalSeconds.toFloat()
-                } else {
-                    0f
-                }
+
+                val progress =
+                    if (timerState.currentPhaseTotalSeconds > 0) {
+                        timerState.timeLeftSeconds.toFloat() /
+                                timerState.currentPhaseTotalSeconds.toFloat()
+                    } else {
+                        0f
+                    }
 
                 CircularProgressIndicator(
                     progress = { progress },
@@ -115,22 +134,28 @@ fun TimerScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 Button(
                     onClick = { viewModel.previousPhase() },
-                    enabled = timerState.currentPhaseIndex > 1
+                    enabled = timerState.currentPhaseIndex > 1,
+                    modifier = Modifier.width(400.dp)
                 ) {
-                    Text("Назад")
+                    Text(stringResource(R.string.back))
                 }
 
                 FloatingActionButton(onClick = { viewModel.togglePlayPause() }) {
                     Icon(
-                        imageVector = if (timerState.isRunning) Icons.Filled.Close else Icons.Filled.PlayArrow, // Замените Close на Pause, если есть
-                        contentDescription = "Play/Pause"
+                        imageVector =
+                            if (timerState.isRunning)
+                                Icons.Filled.Close
+                            else
+                                Icons.Filled.PlayArrow,
+                        contentDescription = stringResource(R.string.play_pause)
                     )
                 }
 
-                Button(onClick = { viewModel.nextPhase() }) {
-                    Text("Вперед")
+                Button(onClick = { viewModel.nextPhase() }, modifier = Modifier.width(400.dp)) {
+                    Text(stringResource(R.string.next_phase))
                 }
             }
 
@@ -139,23 +164,28 @@ fun TimerScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                "Предстоящие фазы:",
+                stringResource(R.string.upcoming_phases),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.align(Alignment.Start)
             )
 
             if (timerState.upcomingPhases.isNotEmpty()) {
+
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
                     items(timerState.upcomingPhases) { phase ->
                         ListItem(
                             headlineContent = { Text(phase.type.name) },
-                            trailingContent = { Text(formatTime(phase.durationSeconds)) }
+                            trailingContent = {
+                                Text(formatTime(phase.durationSeconds))
+                            }
                         )
                     }
                 }
+
             } else {
+
                 Text(
-                    "Это последняя фаза!",
+                    stringResource(R.string.last_phase),
                     modifier = Modifier.padding(20.dp)
                 )
             }

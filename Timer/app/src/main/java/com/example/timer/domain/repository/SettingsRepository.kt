@@ -20,7 +20,19 @@ class SettingsRepository @Inject constructor(
     val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
 
     fun setDarkMode(isDark: Boolean) {
-        prefs.edit { putBoolean("is_dark_mode", isDark) }
+        prefs.edit(commit = true) {
+            putBoolean("is_dark_mode", isDark)
+        }
         _isDarkMode.value = isDark
+    }
+
+    private val _languageCode = MutableStateFlow(prefs.getString("language_code", "en") ?: "en")
+    val languageCode: StateFlow<String> = _languageCode.asStateFlow()
+
+    fun setLanguage(code: String) {
+        prefs.edit(commit = true) {
+            putString("language_code", code)
+        }
+        _languageCode.value = code
     }
 }

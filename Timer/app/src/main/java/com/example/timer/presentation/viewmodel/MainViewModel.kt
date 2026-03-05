@@ -1,12 +1,16 @@
 package com.example.timer.presentation.viewmodel
 
+import android.content.Context
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.timer.R
 import com.example.timer.domain.model.PhaseType
 import com.example.timer.domain.model.TimerPhase
 import com.example.timer.domain.model.TimerSequence
 import com.example.timer.domain.repository.TimerSequenceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -15,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val repository: TimerSequenceRepository
+    private val repository: TimerSequenceRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     val sequences: StateFlow<List<TimerSequence>> = repository.getAllSequences()
@@ -33,8 +38,9 @@ class MainViewModel @Inject constructor(
 
     fun addTestSequence() {
         viewModelScope.launch {
+            val workoutLabel = context.getString(R.string.workout)
             val testSequence = TimerSequence(
-                name = "Тренировка ${sequences.value.size + 1}",
+                name = "$workoutLabel ${sequences.value.size + 1}",
                 color = 0xFFBB86FC.toInt(),
                 phases = listOf(
                     TimerPhase(type = PhaseType.WARMUP, durationSeconds = 30),

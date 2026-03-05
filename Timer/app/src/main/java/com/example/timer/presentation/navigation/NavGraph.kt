@@ -56,6 +56,7 @@ fun SetupNavGraph(navController: NavHostController) {
 
         composable(route = Screen.Settings.route) {
             SettingsScreen(
+                navController = navController,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

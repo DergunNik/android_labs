@@ -12,8 +12,13 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     val isDarkMode: StateFlow<Boolean> = settingsRepository.isDarkMode
+    val languageCode: StateFlow<String> = settingsRepository.languageCode
 
     fun toggleTheme(isDark: Boolean) {
         settingsRepository.setDarkMode(isDark)
+    }
+
+    fun changeLanguage(code: String) {
+        settingsRepository.setLanguage(code)
     }
 }

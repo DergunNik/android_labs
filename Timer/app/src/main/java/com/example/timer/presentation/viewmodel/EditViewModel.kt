@@ -3,6 +3,7 @@ package com.example.timer.presentation.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.timer.R
 import com.example.timer.domain.model.PhaseType
 import com.example.timer.domain.model.TimerPhase
 import com.example.timer.domain.model.TimerSequence
@@ -29,8 +30,8 @@ class EditViewModel @Inject constructor(
     private val _sequenceState = MutableStateFlow<TimerSequence?>(null)
     val sequenceState: StateFlow<TimerSequence?> = _sequenceState.asStateFlow()
 
-    private val _messageEvent = MutableSharedFlow<String>()
-    val messageEvent: SharedFlow<String> = _messageEvent.asSharedFlow()
+    private val _messageEvent = MutableSharedFlow<Int>()
+    val messageEvent: SharedFlow<Int> = _messageEvent.asSharedFlow()
 
     init {
         if (sequenceId != null && sequenceId != "null") {
@@ -105,7 +106,7 @@ class EditViewModel @Inject constructor(
 
     private fun sendLimitWarning() {
         viewModelScope.launch {
-            _messageEvent.emit("Максимальная длительность фазы — 24 часа")
+            _messageEvent.emit(R.string.limit_warning)
         }
     }
 
@@ -120,12 +121,12 @@ class EditViewModel @Inject constructor(
         val seqToSave = _sequenceState.value ?: return
 
             viewModelScope.launch {
-            if (seqToSave.name.isBlank()) {
-                _messageEvent.emit("Введите название тренировки")
+            if (seqToSave.name.trim().isEmpty()) {
+                _messageEvent.emit(R.string.error_empty_name)
                 return@launch
             }
             if (seqToSave.phases.isEmpty()) {
-                _messageEvent.emit("Добавьте хотя бы одну фазу")
+                _messageEvent.emit(R.string.error_no_phases)
                 return@launch
             }
 

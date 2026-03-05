@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -33,6 +34,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.timer.domain.model.PhaseType
 import com.example.timer.domain.model.TimerPhase
 import com.example.timer.presentation.viewmodel.EditViewModel
+import com.example.timer.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -68,15 +70,20 @@ fun EditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (currentSeq.id.isEmpty()) "Новый таймер" else "Редактирование") },
+                title = { Text(
+                    if (currentSeq.id.isEmpty())
+                        stringResource(R.string.new_timer)
+                    else
+                        stringResource(R.string.edit_timer))
+                        },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = R.string.back.toString())
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.saveSequence(onSaved = onNavigateBack) }) {
-                        Icon(Icons.Default.Check, contentDescription = "Сохранить")
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.save))
                     }
                 }
             )
@@ -91,14 +98,14 @@ fun EditScreen(
             OutlinedTextField(
                 value = currentSeq.name,
                 onValueChange = { viewModel.updateName(it) },
-                label = { Text("Название таймера") },
+                label = { Text(stringResource(R.string.timer_name_hint)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("Цвет последовательности", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.color_label), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -122,7 +129,7 @@ fun EditScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Фазы таймера", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.phases_label), style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
 
             LazyColumn(
@@ -257,7 +264,7 @@ fun PhaseEditItem(
                 IconButton(onClick = onRemove, modifier = Modifier.size(controlHeight)) {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Удалить",
+                        contentDescription = stringResource(R.string.delete_phase_title),
                         modifier = Modifier.size(20.dp),
                         tint = contentColor
                     )
