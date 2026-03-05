@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.timer.presentation.screen.EditScreen
 import com.example.timer.presentation.screen.MainScreen
+import com.example.timer.presentation.screen.SettingsScreen
 import com.example.timer.presentation.screen.TimerScreen
 
 @Composable
@@ -25,6 +26,9 @@ fun SetupNavGraph(navController: NavHostController) {
                 },
                 onNavigateToEdit = { id ->
                     navController.navigate(Screen.Edit.createRoute(id))
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.Settings.route)
                 }
             )
         }
@@ -46,6 +50,12 @@ fun SetupNavGraph(navController: NavHostController) {
             })
         ) {
             EditScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = Screen.Settings.route) {
+            SettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

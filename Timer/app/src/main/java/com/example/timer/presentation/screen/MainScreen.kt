@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,13 +27,23 @@ import com.example.timer.presentation.viewmodel.MainViewModel
 fun MainScreen(
     viewModel: MainViewModel = hiltViewModel(),
     onNavigateToTimer: (String) -> Unit,
-    onNavigateToEdit: (String?) -> Unit
+    onNavigateToEdit: (String?) -> Unit,
+    onNavigateToSettings: () -> Unit,
 ) {
     val sequences by viewModel.sequences.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Мои последовательности") })
+            TopAppBar(
+                title = { Text("Мои тринировки") },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Настройки"
+                        )
+                    }
+                })
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { onNavigateToEdit(null) }) {
