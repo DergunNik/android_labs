@@ -11,9 +11,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,10 +30,35 @@ fun MainScreen(
 ) {
     val sequences by viewModel.sequences.collectAsState()
 
+    var sequenceToDelete by remember { mutableStateOf<TimerSequence?>(null) }
+
+    if (sequenceToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { sequenceToDelete = null },
+            title = { Text("Удалить тренировку?") },
+            text = { Text("Вы уверены, что хотите удалить «${sequenceToDelete?.name}»? Это действие нельзя отменить.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        sequenceToDelete?.let { viewModel.deleteSequence(it) }
+                        sequenceToDelete = null
+                    }
+                ) {
+                    Text("Удалить", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { sequenceToDelete = null }) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Мои тринировки") },
+                title = { Text("Мои тренировки") },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
@@ -64,7 +87,7 @@ fun MainScreen(
                 items(sequences, key = { it.id }) { sequence ->
                     TimerItem(
                         sequence = sequence,
-                        onDelete = { viewModel.deleteSequence(sequence) },
+                        onDelete = { sequenceToDelete = sequence },
                         onClick = { onNavigateToTimer(sequence.id) },
                         onEditClick = { onNavigateToEdit(sequence.id) }
                     )
@@ -87,7 +110,7 @@ fun TimerItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(16.dp).background(Color(sequence.color), CircleShape))
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
