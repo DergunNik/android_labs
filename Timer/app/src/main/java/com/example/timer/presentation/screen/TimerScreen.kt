@@ -138,12 +138,14 @@ fun TimerScreen(
                 Button(
                     onClick = { viewModel.previousPhase() },
                     enabled = timerState.currentPhaseIndex > 1,
-                    modifier = Modifier.width(400.dp)
+                    modifier = Modifier.width(128.dp)
                 ) {
                     Text(stringResource(R.string.back))
                 }
 
-                FloatingActionButton(onClick = { viewModel.togglePlayPause() }) {
+                FloatingActionButton(
+                    onClick = { viewModel.togglePlayPause() },
+                    ) {
                     Icon(
                         imageVector =
                             if (timerState.isRunning)
@@ -154,7 +156,10 @@ fun TimerScreen(
                     )
                 }
 
-                Button(onClick = { viewModel.nextPhase() }, modifier = Modifier.width(400.dp)) {
+                Button(
+                    onClick = { viewModel.nextPhase() },
+                    modifier = Modifier.width(128.dp)
+                ) {
                     Text(stringResource(R.string.next_phase))
                 }
             }
