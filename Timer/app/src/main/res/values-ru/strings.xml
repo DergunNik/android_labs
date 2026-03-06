@@ -29,8 +29,8 @@
     <string name="dark_theme">Тёмная тема</string>
     <string name="language_russian">Русский</string>
     <string name="language_english">Английский</string>
-    <string name="close_timer">Close timer</string>
-    <string name="workout_finished">Workout finished!</string>
+    <string name="close_timer">Закрыть таймер</string>
+    <string name="workout_finished">Тренировка завершена!</string>
     <string name="done">Готово</string>
     <string name="phase_progress">Фаза %1$d %2$d</string>
     <string name="loading">Загрузка...</string>
@@ -38,4 +38,9 @@
     <string name="next_phase">Следующая</string>
     <string name="upcoming_phases">Оставшиеся фазы</string>
     <string name="last_phase">Это последняя фаза</string>
+    <string name="font_size_label">Размер шрифта: %1$d%%</string>
+    <string name="data_section">Данные</string>
+    <string name="clear_all_data">Очистить все данные</string>
+    <string name="confirm_clear_title">Вы уверены?</string>
+    <string name="confirm_clear_msg">Все сохраненные таймеры и настройки будут удалены безвозвратно.</string>
 </resources>

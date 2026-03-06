@@ -11,6 +11,7 @@ composeBom = "2025.07.00"
 hilt = "2.59.2"
 lifecycleService = "2.10.0"
 appcompat = "1.7.1"
+roomKtx = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,7 +32,8 @@ androidx-compose-material3-adaptive-navigation-suite = { group = "androidx.compo
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" } #
 hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" } #
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" } #
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

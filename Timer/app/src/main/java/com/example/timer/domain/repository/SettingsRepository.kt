@@ -20,9 +20,7 @@ class SettingsRepository @Inject constructor(
     val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
 
     fun setDarkMode(isDark: Boolean) {
-        prefs.edit(commit = true) {
-            putBoolean("is_dark_mode", isDark)
-        }
+        prefs.edit { putBoolean("is_dark_mode", isDark) }
         _isDarkMode.value = isDark
     }
 
@@ -30,9 +28,22 @@ class SettingsRepository @Inject constructor(
     val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
     fun setLanguage(code: String) {
-        prefs.edit(commit = true) {
-            putString("language_code", code)
-        }
+        prefs.edit { putString("language_code", code) }
         _languageCode.value = code
+    }
+
+    private val _fontSizeScale = MutableStateFlow(prefs.getFloat("font_size_scale", 1.0f))
+    val fontSizeScale: StateFlow<Float> = _fontSizeScale.asStateFlow()
+
+    fun setFontSizeScale(scale: Float) {
+        prefs.edit { putFloat("font_size_scale", scale) }
+        _fontSizeScale.value = scale
+    }
+
+    fun clearSettings() {
+        prefs.edit { clear() }
+        _isDarkMode.value = false
+        _languageCode.value = "en"
+        _fontSizeScale.value = 1.0f
     }
 }
