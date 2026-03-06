@@ -86,23 +86,19 @@ fun SettingsScreen(
                 )
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            CompositionLocalProvider(
-                LocalDensity provides Density(LocalDensity.current.density, fontScale = 1f)
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.font_size_label, (fontSizeScale * 100).toInt()),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Slider(
-                        value = fontSizeScale,
-                        onValueChange = { viewModel.setFontSize(it) },
-                        valueRange = 0.8f..1.5f,
-                        steps = 6
-                    )
-                }
+            Column {
+                Text(
+                    text = stringResource(R.string.font_size_label, (fontSizeScale * 100).toInt()),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Slider(
+                    value = fontSizeScale,
+                    onValueChange = { viewModel.setFontSize(it) },
+                    valueRange = 0.8f..1.5f,
+                    steps = 6
+                )
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
