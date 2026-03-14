@@ -1,6 +1,7 @@
 package com.example.timer.domain.model
 
 data class TimerState(
+    val sequenceId: String = "",
     val isRunning: Boolean = false,
     val isFinished: Boolean = false,
     val sequenceName: String = "",

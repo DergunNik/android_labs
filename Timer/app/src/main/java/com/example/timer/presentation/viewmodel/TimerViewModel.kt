@@ -42,9 +42,10 @@ class TimerViewModel @Inject constructor(
                 }
             }
             val currentServiceState = timerService?.timerState?.value
-            val needsStart = currentServiceState?.let { it.sequenceName.isEmpty() || it.isFinished } ?: true
-            if (needsStart && sequenceId != null) {
-                startNewSequence(sequenceId)
+            val needsStart = sequenceId != null &&
+                    (currentServiceState?.sequenceId.isNullOrEmpty() || currentServiceState?.sequenceId != sequenceId)
+            if (needsStart) {
+                startNewSequence(sequenceId!!)
             }
         }
         override fun onServiceDisconnected(name: ComponentName?) {

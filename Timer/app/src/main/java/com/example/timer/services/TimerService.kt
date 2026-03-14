@@ -27,16 +27,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TimerService : LifecycleService() {
-
     private val binder = TimerBinder()
     private val _timerState = MutableStateFlow(TimerState())
     val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
-
     private var timerJob: Job? = null
     private var flatPhases: List<TimerPhase> = emptyList()
     private var currentIndex = 0
     private var currentSequenceId: String = ""
-
     private val CHANNEL_ID = "timer_channel"
     private val NOTIFICATION_ID = 1
 
@@ -56,34 +53,27 @@ class TimerService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-
-        // Принудительный старт Foreground с заглушкой, чтобы Android не убил сервис
-        // до того, как ViewModel пришлет данные секвенции
-        val notification = createNotification("Таймер", "Подготовка к работе...")
+        val notification = createNotification("Таймер", "Подготовка к работе...", false)
         startForeground(NOTIFICATION_ID, notification)
-
         return START_STICKY
     }
 
     fun setSequenceAndStart(sequence: TimerSequence, sequenceId: String) {
-        // Если этот же таймер уже запущен, не перезапускаем
         if (this.currentSequenceId == sequenceId && _timerState.value.isRunning) return
-
         this.currentSequenceId = sequenceId
         flatPhases = sequence.phases.flatMap { phase ->
             List(phase.repetitions) { phase }
         }
         currentIndex = 0
-
         _timerState.update {
             it.copy(
+                sequenceId = currentSequenceId,
                 sequenceName = sequence.name,
                 totalPhases = flatPhases.size,
                 isFinished = false,
                 currentPhaseIndex = 1
             )
         }
-
         startPhase()
     }
 
@@ -93,11 +83,11 @@ class TimerService : LifecycleService() {
             finishSequence()
             return
         }
-
         timerJob?.cancel()
         timerJob = lifecycleScope.launch {
             _timerState.update {
                 it.copy(
+                    sequenceId = currentSequenceId,
                     isRunning = true,
                     isFinished = false,
                     currentPhase = phase,
@@ -107,17 +97,12 @@ class TimerService : LifecycleService() {
                     upcomingPhases = flatPhases.drop(currentIndex + 1)
                 )
             }
-
-            // Основной цикл отсчета
             for (seconds in phase.durationSeconds downTo 0) {
                 _timerState.update { it.copy(timeLeftSeconds = seconds) }
-
-                // Обновляем уведомление каждую секунду
                 updateNotification(
                     title = "Фаза: ${phase.type.name}",
                     text = "Осталось: $seconds сек. (${currentIndex + 1}/${flatPhases.size})"
                 )
-
                 if (seconds == 0) {
                     playSignal()
                     delay(500)
@@ -125,7 +110,6 @@ class TimerService : LifecycleService() {
                     delay(1000)
                 }
             }
-
             currentIndex++
             startPhase()
         }
@@ -145,7 +129,6 @@ class TimerService : LifecycleService() {
     private fun startPhaseFromCurrent() {
         val currentSeconds = _timerState.value.timeLeftSeconds
         val phase = flatPhases.getOrNull(currentIndex) ?: return
-
         timerJob?.cancel()
         timerJob = lifecycleScope.launch {
             _timerState.update { it.copy(isRunning = true) }
@@ -180,6 +163,7 @@ class TimerService : LifecycleService() {
         timerJob?.cancel()
         _timerState.update {
             it.copy(
+                sequenceId = currentSequenceId,
                 isRunning = false,
                 isFinished = true,
                 currentPhase = null,
@@ -187,10 +171,7 @@ class TimerService : LifecycleService() {
                 upcomingPhases = emptyList()
             )
         }
-        // Не убираем уведомление сразу, чтобы пользователь мог нажать "Готово" в приложении
         updateNotification("Тренировка завершена!", "Отличная работа")
-        stopForeground(STOP_FOREGROUND_DETACH)
-        stopSelf()
     }
 
     fun stopTimer() {
@@ -212,7 +193,7 @@ class TimerService : LifecycleService() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Работа таймера",
-                NotificationManager.IMPORTANCE_LOW // LOW чтобы не пикало каждую секунду
+                NotificationManager.IMPORTANCE_DEFAULT
             )
             val manager = getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(channel)
@@ -220,32 +201,31 @@ class TimerService : LifecycleService() {
     }
 
     private fun updateNotification(title: String, text: String) {
-        val notification = createNotification(title, text)
+        val isFinished = title == "Тренировка завершена!"
+        val notification = createNotification(title, text, isFinished)
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(NOTIFICATION_ID, notification)
     }
 
-    private fun createNotification(title: String, text: String): Notification {
-        // Если ID еще нет, ведем просто в приложение, если есть - по Deep Link
+    private fun createNotification(title: String, text: String, isFinished: Boolean): Notification {
         val uriString = if (currentSequenceId.isNotEmpty()) "timerapp://timer/$currentSequenceId" else "timerapp://main"
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uriString), this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentIntent(pendingIntent)
             .setOnlyAlertOnce(true)
-            .setOngoing(true)
+            .setOngoing(!isFinished)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
     }
 }
