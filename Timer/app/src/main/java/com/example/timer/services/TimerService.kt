@@ -1,10 +1,12 @@
 package com.example.timer.services
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -33,6 +35,10 @@ class TimerService : LifecycleService() {
     private var timerJob: Job? = null
     private var flatPhases: List<TimerPhase> = emptyList()
     private var currentIndex = 0
+    private var currentSequenceId: String = ""
+
+    private val CHANNEL_ID = "timer_channel"
+    private val NOTIFICATION_ID = 1
 
     inner class TimerBinder : Binder() {
         fun getService(): TimerService = this@TimerService
@@ -43,7 +49,27 @@ class TimerService : LifecycleService() {
         return binder
     }
 
-    fun setSequenceAndStart(sequence: TimerSequence) {
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannel()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+
+        // Принудительный старт Foreground с заглушкой, чтобы Android не убил сервис
+        // до того, как ViewModel пришлет данные секвенции
+        val notification = createNotification("Таймер", "Подготовка к работе...")
+        startForeground(NOTIFICATION_ID, notification)
+
+        return START_STICKY
+    }
+
+    fun setSequenceAndStart(sequence: TimerSequence, sequenceId: String) {
+        // Если этот же таймер уже запущен, не перезапускаем
+        if (this.currentSequenceId == sequenceId && _timerState.value.isRunning) return
+
+        this.currentSequenceId = sequenceId
         flatPhases = sequence.phases.flatMap { phase ->
             List(phase.repetitions) { phase }
         }
@@ -53,64 +79,74 @@ class TimerService : LifecycleService() {
             it.copy(
                 sequenceName = sequence.name,
                 totalPhases = flatPhases.size,
-                isFinished = false
+                isFinished = false,
+                currentPhaseIndex = 1
             )
         }
 
-        startForegroundService()
         startPhase()
     }
 
     private fun startPhase() {
-        if (currentIndex >= flatPhases.size) {
+        val phase = flatPhases.getOrNull(currentIndex)
+        if (phase == null) {
             finishSequence()
             return
         }
 
-        val phase = flatPhases[currentIndex]
         timerJob?.cancel()
-
         timerJob = lifecycleScope.launch {
             _timerState.update {
                 it.copy(
                     isRunning = true,
                     isFinished = false,
                     currentPhase = phase,
-                    currentPhaseTotalSeconds = phase.durationSeconds
+                    currentPhaseTotalSeconds = phase.durationSeconds,
+                    timeLeftSeconds = phase.durationSeconds,
+                    currentPhaseIndex = currentIndex + 1,
+                    upcomingPhases = flatPhases.drop(currentIndex + 1)
                 )
             }
 
+            // Основной цикл отсчета
             for (seconds in phase.durationSeconds downTo 0) {
-                _timerState.update {
-                    it.copy(
-                        timeLeftSeconds = seconds,
-                        currentPhaseIndex = currentIndex + 1,
-                        upcomingPhases = flatPhases.drop(currentIndex + 1)
-                    )
+                _timerState.update { it.copy(timeLeftSeconds = seconds) }
+
+                // Обновляем уведомление каждую секунду
+                updateNotification(
+                    title = "Фаза: ${phase.type.name}",
+                    text = "Осталось: $seconds сек. (${currentIndex + 1}/${flatPhases.size})"
+                )
+
+                if (seconds == 0) {
+                    playSignal()
+                    delay(500)
+                } else {
+                    delay(1000)
                 }
-
-                updateNotification("Фаза: ${phase.type.name}", "Осталось: $seconds сек")
-
-                if (seconds == 0) playSignal()
-                if (seconds > 0) delay(1000)
             }
+
             currentIndex++
             startPhase()
         }
     }
 
     fun pauseTimer() {
-        if (_timerState.value.isFinished) return
         timerJob?.cancel()
         _timerState.update { it.copy(isRunning = false) }
-        updateNotification("Таймер на паузе", "")
+        updateNotification("Пауза", _timerState.value.sequenceName ?: "")
     }
 
     fun resumeTimer() {
         if (_timerState.value.isFinished) return
+        startPhaseFromCurrent()
+    }
+
+    private fun startPhaseFromCurrent() {
         val currentSeconds = _timerState.value.timeLeftSeconds
         val phase = flatPhases.getOrNull(currentIndex) ?: return
 
+        timerJob?.cancel()
         timerJob = lifecycleScope.launch {
             _timerState.update { it.copy(isRunning = true) }
             for (seconds in currentSeconds downTo 0) {
@@ -151,7 +187,9 @@ class TimerService : LifecycleService() {
                 upcomingPhases = emptyList()
             )
         }
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        // Не убираем уведомление сразу, чтобы пользователь мог нажать "Готово" в приложении
+        updateNotification("Тренировка завершена!", "Отличная работа")
+        stopForeground(STOP_FOREGROUND_DETACH)
         stopSelf()
     }
 
@@ -164,31 +202,50 @@ class TimerService : LifecycleService() {
     private fun playSignal() {
         try {
             val mediaPlayer = MediaPlayer.create(this, R.raw.timer_beep_sound)
-            mediaPlayer.start()
-            mediaPlayer.setOnCompletionListener { it.release() }
+            mediaPlayer?.setOnCompletionListener { it.release() }
+            mediaPlayer?.start()
         } catch (e: Exception) { e.printStackTrace() }
     }
 
-    private fun startForegroundService() {
-        val channelId = "timer_channel"
+    private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId, "Таймер", NotificationManager.IMPORTANCE_LOW)
-            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Работа таймера",
+                NotificationManager.IMPORTANCE_LOW // LOW чтобы не пикало каждую секунду
+            )
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
         }
-
-        val intent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-
-        val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Таймер запущен")
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentIntent(pendingIntent)
-            .build()
-
-        startForeground(1, notification)
     }
 
     private fun updateNotification(title: String, text: String) {
-        // Логика обновления уведомления
+        val notification = createNotification(title, text)
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.notify(NOTIFICATION_ID, notification)
+    }
+
+    private fun createNotification(title: String, text: String): Notification {
+        // Если ID еще нет, ведем просто в приложение, если есть - по Deep Link
+        val uriString = if (currentSequenceId.isNotEmpty()) "timerapp://timer/$currentSequenceId" else "timerapp://main"
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uriString), this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentIntent(pendingIntent)
+            .setOnlyAlertOnce(true)
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
     }
 }

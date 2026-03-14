@@ -8,6 +8,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.example.timer.presentation.screen.EditScreen
 import com.example.timer.presentation.screen.MainScreen
 import com.example.timer.presentation.screen.SettingsScreen
@@ -35,7 +36,12 @@ fun SetupNavGraph(navController: NavHostController) {
 
         composable(
             route = Screen.Timer.route,
-            arguments = listOf(navArgument("sequenceId") { type = NavType.StringType })
+            arguments = listOf(navArgument("sequenceId") { type = NavType.StringType }),
+            deepLinks = listOf(
+                navDeepLink {
+                    uriPattern = "timerapp://timer/{sequenceId}"
+                }
+            )
         ) {
             TimerScreen(
                 onNavigateBack = { navController.popBackStack() }
@@ -61,9 +67,4 @@ fun SetupNavGraph(navController: NavHostController) {
             )
         }
     }
-}
-
-@Composable
-fun PlaceholderScreen(title: String) {
-    androidx.compose.material3.Text(text = title, modifier = androidx.compose.ui.Modifier.padding(16.dp))
 }
