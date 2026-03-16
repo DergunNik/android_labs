@@ -3,6 +3,7 @@ package com.example.calculator.presentation
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,10 +16,11 @@ fun Display(expression: String, result: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier.padding(horizontal = 8.dp)) {
         Text(
             text = expression,
-            fontSize = 20.sp,
+            fontSize = 18.sp,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.End,
-            maxLines = 2
+            maxLines = 2,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
         )
 
         Text(
@@ -26,7 +28,8 @@ fun Display(expression: String, result: String, modifier: Modifier = Modifier) {
             fontSize = 48.sp,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.End,
-            maxLines = 1
+            maxLines = 1,
+            color = MaterialTheme.colorScheme.onBackground
         )
     }
 }

@@ -14,37 +14,86 @@ import com.example.calculator.viewmodels.CalculatorViewModel
 
 @Composable
 fun CalculatorApp(viewModel: CalculatorViewModel = viewModel()) {
+
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape =
+        configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     val isDemo = BuildConfig.FLAVOR == "demo"
 
-    val showEngineering = !isDemo && (isLandscape || viewModel.isEngineeringMode)
+    val showEngineering =
+        !isDemo && (isLandscape || viewModel.isEngineeringMode)
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(12.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(start = 12.dp, end = 12.dp, top = 28.dp, bottom = 20.dp)
+    ) {
 
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp), horizontalArrangement = Arrangement.End) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
             Button(onClick = { viewModel.toggleMode() }) {
                 Text(if (viewModel.isEngineeringMode) "Basic" else "Eng")
             }
         }
 
+        Spacer(modifier = Modifier.weight(1f))
+
         Display(
             expression = viewModel.expression,
             result = viewModel.result,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp)
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        if (isLandscape) {
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (showEngineering) {
-                EngineeringPad(viewModel = viewModel, modifier = Modifier.weight(1f))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+
+                if (showEngineering) {
+                    EngineeringPad(
+                        viewModel = viewModel,
+                        modifier = Modifier.weight(1f),
+                        isLandscape = true
+                    )
+                }
+
+                BasicPad(
+                    viewModel = viewModel,
+                    modifier = Modifier.weight(1f),
+                    isLandscape = true
+                )
             }
-            BasicPad(viewModel = viewModel, modifier = Modifier.weight(1f))
+
+        } else {
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+
+                if (showEngineering) {
+                    EngineeringPad(
+                        viewModel = viewModel,
+                        modifier = Modifier.fillMaxWidth(),
+                        isLandscape = false
+                    )
+                }
+
+                BasicPad(
+                    viewModel = viewModel,
+                    modifier = Modifier.fillMaxWidth(),
+                    isLandscape = false
+                )
+            }
         }
     }
 }
