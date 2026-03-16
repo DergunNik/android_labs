@@ -24,7 +24,7 @@ fun Display(expression: String, result: String, modifier: Modifier = Modifier) {
 
     Column(modifier = modifier.padding(horizontal = 8.dp)) {
         Text(
-            text = expression,
+            text = result,
             fontSize = 18.sp,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.End,
@@ -33,7 +33,7 @@ fun Display(expression: String, result: String, modifier: Modifier = Modifier) {
         )
 
         Text(
-            text = result,
+            text = if (expression.isEmpty()) "0" else expression,
             fontSize = 48.sp,
             modifier = Modifier
                 .fillMaxWidth()

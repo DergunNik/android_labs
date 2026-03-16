@@ -24,6 +24,10 @@ class CalculatorViewModel : ViewModel() {
     }
 
     fun onInput(value: String) {
+        if (expression == "Error") {
+            expression = ""
+        }
+
         when (value) {
             "AC" -> onClear()
             "<=" -> backspace()
@@ -35,18 +39,21 @@ class CalculatorViewModel : ViewModel() {
             "(" -> appendOpenParen()
             ")" -> appendCloseParen()
             "." -> appendDot()
+            "=" -> onCalculate()
             "x^2" -> appendOperator('^', "2")
             "x^y" -> appendOperator('^')
             "√x" -> appendFunction("sqrt")
             "e^x" -> appendFunction("exp")
             "sin", "cos", "tan", "ln", "log" -> appendFunction(value)
-            else -> {
-                if (expression.isNotEmpty() && expression.last() == ')') {
-                    expression += "*$value"
-                } else {
-                    expression += value
-                }
-            }
+            else -> appendDigit(value)
+        }
+    }
+
+    private fun appendDigit(digit: String) {
+        if (expression.isNotEmpty() && expression.last() == ')') {
+            expression += "*$digit"
+        } else {
+            expression += digit
         }
     }
 
@@ -62,7 +69,7 @@ class CalculatorViewModel : ViewModel() {
             if (expression.length >= 2) {
                 val secondLast = expression[expression.length - 2]
                 if (operators.contains(secondLast) || secondLast == '(') {
-                    expression = expression.dropLast(1).dropLast(1) + op + suffix
+                    expression = expression.dropLast(2) + op + suffix
                     return
                 }
             }
@@ -137,9 +144,7 @@ class CalculatorViewModel : ViewModel() {
 
     private fun backspace() {
         if (expression.isEmpty()) return
-
         val foundFunction = functions.find { expression.endsWith(it) }
-
         if (foundFunction != null) {
             expression = expression.dropLast(foundFunction.length)
         } else {
@@ -160,7 +165,6 @@ class CalculatorViewModel : ViewModel() {
 
         var i = expression.length - 1
         while (i >= 0 && (expression[i].isDigit() || expression[i] == '.')) i--
-
         val start = i + 1
 
         if (start >= expression.length) {
@@ -224,9 +228,13 @@ class CalculatorViewModel : ViewModel() {
 
         try {
             val evalResult = Parser.evaluate(expToEval)
-            result = evalResult.stripTrailingZeros().toPlainString()
+            val formattedResult = evalResult.stripTrailingZeros().toPlainString()
+
+            result = expression
+            expression = formattedResult
         } catch (e: Exception) {
-            result = "Error"
+            result = expression
+            expression = "Error"
         }
     }
 }
