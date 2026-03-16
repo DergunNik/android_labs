@@ -1,11 +1,14 @@
 package com.example.calculator.services
 
-import kotlin.math.pow
-import kotlin.math.sqrt
+import java.math.BigDecimal
+import java.math.MathContext
+import kotlin.math.*
 
 object Parser {
-    fun evaluate(str: String): Double {
-        return object : Any() {
+    fun evaluate(str: String): BigDecimal {
+        val mc = MathContext.DECIMAL64
+
+        return object {
             var pos = -1
             var ch = 0
 
@@ -22,68 +25,92 @@ object Parser {
                 return false
             }
 
-            fun parse(): Double {
+            fun parse(): BigDecimal {
                 nextChar()
                 val x = parseExpression()
                 if (pos < str.length) throw RuntimeException("Unexpected: " + ch.toChar())
                 return x
             }
 
-            fun parseExpression(): Double {
+            fun parseExpression(): BigDecimal {
                 var x = parseTerm()
                 while (true) {
-                    if (eat('+'.code)) x += parseTerm()
-                    else if (eat('-'.code)) x -= parseTerm()
+                    if (eat('+'.code)) x = x.add(parseTerm(), mc)
+                    else if (eat('-'.code)) x = x.subtract(parseTerm(), mc)
                     else return x
                 }
             }
 
-            fun parseTerm(): Double {
+            fun parseTerm(): BigDecimal {
                 var x = parseFactor()
                 while (true) {
-                    if (eat('*'.code)) x *= parseFactor()
-                    else if (eat('/'.code)) x /= parseFactor()
-                    else if (eat('%'.code)) x %= parseFactor()
+                    if (eat('*'.code)) x = x.multiply(parseFactor(), mc)
+                    else if (eat('/'.code)) x = x.divide(parseFactor(), mc)
+                    else if (eat('%'.code)) x = x.remainder(parseFactor(), mc)
                     else return x
                 }
             }
 
-            fun parseFactor(): Double {
+            fun parseFactor(): BigDecimal {
                 if (eat('+'.code)) return parseFactor()
-                if (eat('-'.code)) return -parseFactor()
+                if (eat('-'.code)) return parseFactor().negate(mc)
 
-                var x: Double
+                var x: BigDecimal
                 val startPos = pos
+
                 if (eat('('.code)) {
                     x = parseExpression()
                     eat(')'.code)
                 } else if (ch >= '0'.code && ch <= '9'.code || ch == '.'.code) {
                     while (ch >= '0'.code && ch <= '9'.code || ch == '.'.code) nextChar()
-                    x = str.substring(startPos, pos).toDouble()
+                    x = BigDecimal(str.substring(startPos, pos))
                 } else if (ch >= 'a'.code && ch <= 'z'.code) {
                     while (ch >= 'a'.code && ch <= 'z'.code) nextChar()
                     val func = str.substring(startPos, pos)
-                    x = parseFactor()
                     x = when (func) {
-                        "sqrt" -> sqrt(x)
-                        else -> throw RuntimeException("Unknown function: $func")
+                        "pi" -> BigDecimal(Math.PI)
+                        "e" -> BigDecimal(Math.E)
+                        else -> {
+                            val arg = parseFactor().toDouble()
+                            val mathResult = when (func) {
+                                "sqrt" -> sqrt(arg)
+                                "sin" -> sin(arg)
+                                "cos" -> cos(arg)
+                                "tan" -> tan(arg)
+                                "ln" -> ln(arg)
+                                "log" -> log10(arg)
+                                "exp" -> exp(arg)
+                                else -> throw RuntimeException("Unknown function: $func")
+                            }
+                            BigDecimal(mathResult)
+                        }
                     }
                 } else {
                     throw RuntimeException("Unexpected: " + ch.toChar())
                 }
 
-                if (eat('^'.code)) x = x.pow(parseFactor())
+                if (eat('^'.code)) {
+                    val exponent = parseFactor()
+                    x = try {
+                        val intExp = exponent.intValueExact()
+                        x.pow(intExp, mc)
+                    } catch (e: ArithmeticException) {
+                        BigDecimal(x.toDouble().pow(exponent.toDouble()))
+                    }
+                }
+
                 if (eat('!'.code)) x = factorial(x)
 
                 return x
             }
 
-            fun factorial(n: Double): Double {
-                if (n < 0 || n % 1.0 != 0.0) throw IllegalArgumentException("Invalid factorial")
-                if (n == 0.0 || n == 1.0) return 1.0
-                var res = 1.0
-                for (i in 2..n.toInt()) {
-                    res *= i
+            fun factorial(n: BigDecimal): BigDecimal {
+                val nDouble = n.toDouble()
+                if (nDouble < 0 || nDouble % 1.0 != 0.0) throw IllegalArgumentException("Invalid factorial")
+                if (nDouble == 0.0 || nDouble == 1.0) return BigDecimal.ONE
+                var res = BigDecimal.ONE
+                for (i in 2..nDouble.toInt()) {
+                    res = res.multiply(BigDecimal(i))
                 }
                 return res
             }
