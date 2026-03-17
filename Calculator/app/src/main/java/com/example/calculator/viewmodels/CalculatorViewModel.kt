@@ -33,6 +33,7 @@ class CalculatorViewModel : ViewModel() {
             "<=" -> backspace()
             "+/-" -> toggleSign()
             "%" -> appendPercent()
+            "!" -> appendFactorial()
             "×" -> appendOperator('*')
             "÷" -> appendOperator('/')
             "+", "-" -> appendOperator(value[0])
@@ -59,7 +60,7 @@ class CalculatorViewModel : ViewModel() {
 
     private fun appendOperator(op: Char, suffix: String = "") {
         if (expression.isEmpty()) {
-            if (op == '-') expression += op
+            expression = "0$op$suffix"
             return
         }
 
@@ -81,9 +82,37 @@ class CalculatorViewModel : ViewModel() {
         }
     }
 
+    private fun appendFactorial() {
+        if (expression.isEmpty()) {
+            expression = "0!"
+            return
+        }
+
+        val lastChar = expression.last()
+        if (lastChar == '(') return
+
+        if (lastChar.isDigit() || lastChar == '.' || lastChar == ')') {
+            expression += "!"
+        } else if (operators.contains(lastChar)) {
+            expression += "0!"
+        }
+    }
+
     private fun appendFunction(func: String) {
         if (expression.isEmpty()) {
-            expression += "$func("
+            expression = "$func(0)"
+            return
+        }
+
+        val lastChar = expression.last()
+
+        if (operators.contains(lastChar) || lastChar == '(') {
+            expression += "$func(0)"
+            return
+        }
+
+        if (lastChar == ')') {
+            expression += "*$func("
             return
         }
 
@@ -93,11 +122,7 @@ class CalculatorViewModel : ViewModel() {
         }
 
         if (i == expression.length - 1) {
-            if (expression.last() == ')') {
-                expression += "*$func("
-            } else {
-                expression += "$func("
-            }
+            expression += "$func("
         } else {
             val numberStr = expression.substring(i + 1)
             expression = expression.substring(0, i + 1) + "$func($numberStr)"
@@ -121,6 +146,11 @@ class CalculatorViewModel : ViewModel() {
     }
 
     private fun appendDot() {
+        if (expression.isEmpty()) {
+            expression = "0."
+            return
+        }
+
         var i = expression.length - 1
         var hasDot = false
         while (i >= 0 && (expression[i].isDigit() || expression[i] == '.')) {
@@ -132,7 +162,7 @@ class CalculatorViewModel : ViewModel() {
         }
 
         if (!hasDot) {
-            if (expression.isEmpty() || (!expression.last().isDigit() && expression.last() != ')')) {
+            if (!expression.last().isDigit() && expression.last() != ')') {
                 expression += "0."
             } else if (expression.last() == ')') {
                 expression += "*0."
@@ -153,64 +183,74 @@ class CalculatorViewModel : ViewModel() {
     }
 
     private fun appendPercent() {
-        if (expression.isEmpty()) return
+        if (expression.isEmpty()) {
+            expression = "0*0.01"
+            return
+        }
         expression += "*0.01"
     }
 
     private fun toggleSign() {
         if (expression.isEmpty()) {
-            expression = "-"
+            expression = "-0"
+            return
+        }
+        if (expression == "-") {
+            expression = ""
+            return
+        }
+
+        if (expression.endsWith("(-")) {
+            expression = expression.dropLast(2)
+            return
+        }
+
+        val wrappedNegNumRegex = Regex("""\(\-([\d.]+)\)$""")
+        val matchWrapped = wrappedNegNumRegex.find(expression)
+        if (matchWrapped != null && matchWrapped.range.last == expression.length - 1) {
+            val num = matchWrapped.groupValues[1]
+            val prefix = expression.substring(0, matchWrapped.range.first)
+            expression = prefix + num
+            return
+        }
+
+        val startNegNumRegex = Regex("""^-([\d.]+)$""")
+        if (expression.matches(startNegNumRegex)) {
+            expression = expression.substring(1)
+            return
+        }
+
+        val incompleteWrappedRegex = Regex("""\(\-([\d.]+)$""")
+        val matchIncomplete = incompleteWrappedRegex.find(expression)
+        if (matchIncomplete != null && matchIncomplete.range.last == expression.length - 1) {
+            val num = matchIncomplete.groupValues[1]
+            val prefix = expression.substring(0, matchIncomplete.range.first)
+            expression = prefix + num
             return
         }
 
         var i = expression.length - 1
         while (i >= 0 && (expression[i].isDigit() || expression[i] == '.')) i--
-        val start = i + 1
 
-        if (start >= expression.length) {
-            if (expression.last() == ')') {
-                var depth = 0
-                var j = expression.length - 1
-                while (j >= 0) {
-                    val c = expression[j]
-                    if (c == ')') depth++
-                    else if (c == '(') {
-                        depth--
-                        if (depth == 0) break
-                    }
-                    j--
-                }
-                if (j >= 0) {
-                    if (j >= 2 && expression.substring(j - 2, j) == "(-") {
-                        expression = expression.removeRange(j - 2, j)
-                    } else if (j >= 1 && expression[j - 1] == '-') {
-                        expression = expression.removeRange(j - 1, j)
-                    } else {
-                        val prefix = expression.substring(0, j)
-                        if (prefix.isNotEmpty() && !operators.contains(prefix.last()) && prefix.last() != '(') {
-                            expression = prefix + "*(-" + expression.substring(j) + ")"
-                        } else {
-                            expression = prefix + "(-" + expression.substring(j) + ")"
-                        }
-                    }
-                }
-            } else if (operators.contains(expression.last())) {
-                expression += "(-"
+        if (i < expression.length - 1) {
+            val num = expression.substring(i + 1)
+            val prefix = expression.substring(0, i + 1)
+
+            if (prefix.isEmpty()) {
+                expression = "-$num"
+            } else if (operators.contains(prefix.last()) || prefix.last() == '(') {
+                expression = "$prefix(-$num"
+            } else {
+                expression = "$prefix*(-$num"
             }
             return
         }
 
-        val number = expression.substring(start)
-        val prefix = expression.substring(0, start)
-
-        if (prefix.endsWith("(-")) {
-            expression = prefix.dropLast(2) + number
-        } else if (prefix.endsWith("-") && (prefix.length == 1 || operators.contains(prefix[prefix.length - 2]) || prefix[prefix.length - 2] == '(')) {
-            expression = prefix.dropLast(1) + number
-        } else if (prefix.isNotEmpty() && !operators.contains(prefix.last()) && prefix.last() != '(') {
-            expression = "$prefix*(-$number)"
-        } else {
-            expression = "$prefix(-$number)"
+        val lastChar = expression.last()
+        if (operators.contains(lastChar) || lastChar == '(') {
+            expression += "(-"
+        } else if (lastChar == ')') {
+            expression += "*(-"
         }
     }
 
@@ -229,7 +269,6 @@ class CalculatorViewModel : ViewModel() {
         try {
             val evalResult = Parser.evaluate(expToEval)
             val formattedResult = evalResult.stripTrailingZeros().toPlainString()
-
             result = expression
             expression = formattedResult
         } catch (e: Exception) {

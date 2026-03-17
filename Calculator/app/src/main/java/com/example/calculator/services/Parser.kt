@@ -99,7 +99,9 @@ object Parser {
                     }
                 }
 
-                if (eat('!'.code)) x = factorial(x)
+                while (eat('!'.code)) {
+                    x = factorial(x)
+                }
 
                 return x
             }
