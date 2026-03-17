@@ -28,7 +28,14 @@ fun CalculatorApp(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(start = 12.dp, end = 12.dp, top = 40.dp, bottom = 20.dp)
+            .windowInsetsPadding(
+                WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+            )
+            .padding(
+                start = 12.dp,
+                end = 12.dp,
+                top = 40.dp,
+                bottom = 20.dp)
     ) {
         Row(
             modifier = Modifier
@@ -36,7 +43,7 @@ fun CalculatorApp(
                 .padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.End
         ) {
-            Button(onClick = { viewModel.toggleMode() }) {
+            Button(onClick = { viewModel.toggleMode() }, enabled = !isDemo) {
                 Text(if (viewModel.isEngineeringMode) "Basic" else "Eng")
             }
         }
@@ -59,7 +66,7 @@ fun CalculatorApp(
                 if (showEngineering) {
                     EngineeringPad(
                         viewModel = viewModel,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(3f),
                         isLandscape = true,
                         buttonCornerRadius = buttonCornerRadius,
                         buttonHeightPortrait = engButtonHeightPortrait,
@@ -69,7 +76,7 @@ fun CalculatorApp(
 
                 BasicPad(
                     viewModel = viewModel,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(if (showEngineering) 5f else 1f),
                     isLandscape = true,
                     buttonCornerRadius = buttonCornerRadius,
                     buttonHeightPortrait = basicButtonHeightPortrait,

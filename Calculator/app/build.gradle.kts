@@ -37,17 +37,20 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        resValues = true
     }
 
     flavorDimensions += "version"
     productFlavors {
         create("demo") {
             dimension = "version"
+            resValue("string", "app_name", "Calculator Demo")
             applicationIdSuffix = ".demo"
             versionNameSuffix = "-demo"
         }
         create("full") {
             dimension = "version"
+            resValue("string", "app_name", "Calculator")
             applicationIdSuffix = ".full"
             versionNameSuffix = "-full"
         }
