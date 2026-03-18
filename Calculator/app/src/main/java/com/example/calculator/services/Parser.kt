@@ -6,7 +6,7 @@ import kotlin.math.*
 
 object Parser {
     fun evaluate(str: String): BigDecimal {
-        val mc = MathContext.DECIMAL64
+        val mc = MathContext.DECIMAL128
 
         return object {
             var pos = -1
@@ -29,7 +29,8 @@ object Parser {
                 nextChar()
                 val x = parseExpression()
                 if (pos < str.length) throw RuntimeException("Unexpected: " + ch.toChar())
-                return x
+                // Убираем лишние нули в конце для чистого результата
+                return x.stripTrailingZeros()
             }
 
             fun parseExpression(): BigDecimal {
@@ -63,58 +64,74 @@ object Parser {
                     eat(')'.code)
                 } else if (ch >= '0'.code && ch <= '9'.code || ch == '.'.code) {
                     while (ch >= '0'.code && ch <= '9'.code || ch == '.'.code) nextChar()
-                    x = BigDecimal(str.substring(startPos, pos))
+                    x = BigDecimal(str.substring(startPos, pos), mc)
                 } else if (ch >= 'a'.code && ch <= 'z'.code) {
                     while (ch >= 'a'.code && ch <= 'z'.code) nextChar()
                     val func = str.substring(startPos, pos)
                     x = when (func) {
-                        "pi" -> BigDecimal(Math.PI)
-                        "e" -> BigDecimal(Math.E)
+                        "pi" -> BigDecimal("3.141592653589793238462643383279503", mc)
+                        "e" -> BigDecimal("2.718281828459045235360287471352662", mc)
                         else -> {
-                            val arg = parseFactor().toDouble()
+                            val arg = parseFactor()
                             val mathResult = when (func) {
-                                "sqrt" -> sqrt(arg)
-                                "sin" -> sin(arg)
-                                "cos" -> cos(arg)
-                                "tan" -> tan(arg)
-                                "ln" -> ln(arg)
-                                "log" -> log10(arg)
-                                "exp" -> exp(arg)
+                                "sqrt" -> arg.sqrt(mc)
+                                "sin" -> sin(arg.toDouble()).toBigDecimal(mc)
+                                "cos" -> cos(arg.toDouble()).toBigDecimal(mc)
+                                "tan" -> tan(arg.toDouble()).toBigDecimal(mc)
+                                "ln" -> ln(arg.toDouble()).toBigDecimal(mc)
+                                "log" -> log10(arg.toDouble()).toBigDecimal(mc)
+                                "exp" -> exp(arg.toDouble()).toBigDecimal(mc)
                                 else -> throw RuntimeException("Unknown function: $func")
                             }
-                            BigDecimal(mathResult)
+                            mathResult
                         }
                     }
                 } else {
                     throw RuntimeException("Unexpected: " + ch.toChar())
                 }
 
-                if (eat('^'.code)) {
-                    val exponent = parseFactor()
-                    x = try {
-                        val intExp = exponent.intValueExact()
-                        x.pow(intExp, mc)
-                    } catch (e: ArithmeticException) {
-                        BigDecimal(x.toDouble().pow(exponent.toDouble()))
-                    }
+                while (eat('!'.code)) {
+                    x = factorial(x, mc)
                 }
 
-                while (eat('!'.code)) {
-                    x = factorial(x)
+                if (eat('^'.code)) {
+                    val exponent = parseFactor()
+                    x = power(x, exponent, mc)
                 }
 
                 return x
             }
 
-            fun factorial(n: BigDecimal): BigDecimal {
-                val nDouble = n.toDouble()
-                if (nDouble < 0 || nDouble % 1.0 != 0.0) throw IllegalArgumentException("Invalid factorial")
-                if (nDouble == 0.0 || nDouble == 1.0) return BigDecimal.ONE
+            fun factorial(n: BigDecimal, mc: MathContext): BigDecimal {
+                if (n < BigDecimal.ZERO || n.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) != 0) {
+                    throw IllegalArgumentException("Factorial is only for non-negative integers")
+                }
+                val intN = n.intValueExact()
+                if (intN == 0 || intN == 1) return BigDecimal.ONE
+
                 var res = BigDecimal.ONE
-                for (i in 2..nDouble.toInt()) {
-                    res = res.multiply(BigDecimal(i))
+                for (i in 2..intN) {
+                    res = res.multiply(BigDecimal(i), mc)
                 }
                 return res
+            }
+
+            fun power(base: BigDecimal, exponent: BigDecimal, mc: MathContext): BigDecimal {
+                return try {
+                    val expInt = exponent.intValueExact()
+                    if (expInt == 0) return BigDecimal.ONE
+
+                    var res = BigDecimal.ONE
+                    val absExp = if (expInt < 0) -expInt else expInt
+
+                    for (i in 1..absExp) {
+                        res = res.multiply(base, mc)
+                    }
+
+                    if (expInt < 0) BigDecimal.ONE.divide(res, mc) else res
+                } catch (e: Exception) {
+                    BigDecimal(base.toDouble().pow(exponent.toDouble()), mc)
+                }
             }
         }.parse()
     }
