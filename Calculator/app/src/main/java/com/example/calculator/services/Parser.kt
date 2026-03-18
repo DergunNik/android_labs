@@ -6,7 +6,7 @@ import kotlin.math.*
 
 object Parser {
     fun evaluate(str: String): BigDecimal {
-        val mc = MathContext.DECIMAL128
+        val mc = MathContext.UNLIMITED
 
         return object {
             var pos = -1
